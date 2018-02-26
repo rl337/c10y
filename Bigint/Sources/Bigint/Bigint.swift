@@ -27,31 +27,39 @@ struct Bigint {
     static let default_size: Int = 4
 
     var content: [UInt64]
+    var capacity: Int
     var negative: Bool
 
-    init(capacity: Int = default_size) {
+    init(capacity: Int = Bigint.default_size) {
+        self.capacity = capacity
         self.content = [UInt64](repeating: 0, count: capacity)
         self.negative = false
     }
 
     init(_ value: Bigint) {
+        self.capacity = Bigint.default_size
         self.content = value.content
+        self.capacity = value.capacity
         self.negative = value.negative
     }
 
     init(_ value: Int) {
+        self.capacity = Bigint.default_size
+        self.content = [UInt64](repeating: 0, count: capacity)
         var absolute = value
         self.negative = false
         if absolute < 0 {
             absolute = -1 * value
             self.negative = true
         }
-        self.content = [ UInt64(absolute) ]
+        content[0] = UInt64(absolute)
     }
 
     init(_ value: UInt) {
+        self.capacity = Bigint.default_size
+        self.content = [UInt64](repeating: 0, count: capacity)
         self.negative = false
-        self.content = [ UInt64(value) ]
+        self.content[0] = UInt64(value)
     }
 
     func equals(_ other: Bigint) -> Bool {
