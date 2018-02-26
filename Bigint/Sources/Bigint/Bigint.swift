@@ -24,13 +24,18 @@ func == (left: UInt, right: Bigint) -> Bool {
 }
 
 struct Bigint {
-    var content0: UInt64 = 0
-    var content1: UInt64 = 0
-    var negative: Bool = false
+    static let default_size: Int = 4
+
+    var content: [UInt64]
+    var negative: Bool
+
+    init(capacity: Int = default_size) {
+        self.content = [UInt64](repeating: 0, count: capacity)
+        self.negative = false
+    }
 
     init(_ value: Bigint) {
-        self.content0 = value.content0
-        self.content1 = value.content1
+        self.content = value.content
         self.negative = value.negative
     }
 
@@ -41,21 +46,17 @@ struct Bigint {
             absolute = -1 * value
             self.negative = true
         }
-        self.content0 = UInt64(absolute)
-        self.content1 = 0
+        self.content = [ UInt64(absolute) ]
     }
 
     init(_ value: UInt) {
         self.negative = false
-        self.content0 = UInt64(value)
-        self.content1 = 0
+        self.content = [ UInt64(value) ]
     }
 
     func equals(_ other: Bigint) -> Bool {
-        return self.content0 == other.content0 &&
-               self.content1 == other.content1 &&
+        return self.content == other.content &&
                self.negative == other.negative
     }
-
 
 }
