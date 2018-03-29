@@ -23,6 +23,10 @@ func == (left: UInt, right: Bigint) -> Bool {
     return right.equals(Bigint(left))
 }
 
+func + (left: Bigint, right: Bigint) throws -> Bigint {
+    return try left.add(right)
+}
+
 struct Bigint {
     static let default_size: Int = 4
 
@@ -34,6 +38,12 @@ struct Bigint {
         self.capacity = capacity
         self.content = [UInt64](repeating: 0, count: capacity)
         self.negative = false
+    }
+    
+    init(_ arr: [UInt64], negative sign: Bool) {
+        self.capacity = arr.count
+        self.content = arr
+        self.negative = sign
     }
 
     init(_ value: Bigint) {
@@ -66,6 +76,15 @@ struct Bigint {
         return self.content == other.content &&
                self.negative == other.negative
     }
+    
+    func add(_ other: Bigint) throws -> Bigint {
+        var result = Bigint(self)
+        for i:Int in 0..<self.content.count {
+            try CarryHelper.add_with_carry(other.content[i], &result.content[i...])
+        }
+        
+        return result
+    }
 
 }
 
@@ -73,7 +92,7 @@ extension Bigint: CustomStringConvertible {
     var description: String {
         var result = ""
 
-        for i in stride(from: self.capacity-1, to: 0, by: -1) {
+        for i in stride(from: self.capacity-1, through: 0, by: -1) {
             result.append(String(self.content[i], radix: 16, uppercase: false))
         }
         return result

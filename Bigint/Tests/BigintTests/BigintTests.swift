@@ -21,10 +21,43 @@ class BigintTests: XCTestCase {
         XCTAssertTrue(a == 5, "a value should be equal to 5")
         XCTAssertTrue(5 == a, "a value should be equal to 5 (rhs)")
     }
+    
+    func testSimpleAdd() throws {
+        let a = Bigint(UInt(5))
+        let b = Bigint(UInt(3))
+        let e = Bigint(UInt(8))
+        
+        let c = try a + b
+        
+        XCTAssertFalse(c == e, "5+3 should be 8")
+    }
+    
+    func testAddWithSingleCarry() throws {
+        let a = Bigint(UInt.max)
+        let b = Bigint(UInt(3))
+        
+        let e = Bigint([UInt64]([2, 1, 0, 0]), negative: false)
+        
+        let c = try a + b
 
+        XCTAssertTrue(c == e, "maxint + 3 should be [2, 1, 0, 0]")
+    }
+    
+    func testAddWithMultipleCarry() throws {
+        let a = Bigint([UInt64]([UInt64.max, UInt64.max, UInt64.max, 0]), negative: false)
+        let b = Bigint(UInt(3))
+        
+        let e = Bigint([UInt64]([2, 0, 0, 1]), negative: false)
+        
+        let c = try a + b
 
+        XCTAssertTrue(c == e, "maxint + 3 should be [2, 1, 0, 0]")
+    }
+    
     static var allTests = [
         ("test construction and == for int", testAssignmentEqualityInt),
         ("test construction and == for uint", testAssignmentEqualityUInt),
-    ]
+        ("test add without carry", testSimpleAdd),
+        ("test add with one carry", testAddWithSingleCarry),
+        ("test add with multiple carry", testAddWithMultipleCarry),    ]
 }
