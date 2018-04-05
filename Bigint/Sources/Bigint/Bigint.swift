@@ -27,6 +27,10 @@ func + (left: Bigint, right: Bigint) throws -> Bigint {
     return try left.add(right)
 }
 
+func < (left: Bigint, right: Bigint) throws -> Bool {
+    return left.compare(right) < 0
+}
+
 struct Bigint {
     static let default_size: Int = 4
 
@@ -72,9 +76,40 @@ struct Bigint {
         self.content[0] = UInt64(value)
     }
 
+    
+    func compare(_ other: Bigint) -> Int {
+        
+        if self.negative == other.negative {
+            if self.content == other.content {
+                return 0
+            }
+            
+            if self.negative {
+                for i in stride(from: content.count-1, through: 0, by: -1) {
+                    if self.content[i] > other.content[i] {
+                        return -1
+                    }
+                }
+            } else {
+                for i in stride(from: content.count-1, through: 0, by: -1) {
+                    if self.content[i] < other.content[i] {
+                        return -1
+                    }
+                }
+            }
+            
+            return 1
+        }
+        
+        if self.negative {
+            return -1
+        }
+        
+        return 1
+    }
+    
     func equals(_ other: Bigint) -> Bool {
-        return self.content == other.content &&
-               self.negative == other.negative
+        return self.compare(other) == 0
     }
     
     func add(_ other: Bigint) throws -> Bigint {
@@ -90,6 +125,17 @@ struct Bigint {
 
 extension Bigint: CustomStringConvertible {
     var description: String {
+        var result = ""
+        
+        for i in stride(from: self.capacity-1, through: 0, by: -1) {
+            result.append(String(self.content[i], radix: 16, uppercase: false))
+        }
+        return result
+    }
+}
+
+extension Bigint: CustomDebugStringConvertible {
+    var debugDescription: String {
         var result = ""
 
         for i in stride(from: self.capacity-1, through: 0, by: -1) {

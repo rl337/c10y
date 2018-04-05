@@ -22,6 +22,24 @@ class BigintTests: XCTestCase {
         XCTAssertTrue(5 == a, "a value should be equal to 5 (rhs)")
     }
     
+    func testLessThan() throws {
+        let a = Bigint(UInt(5))
+        let b = Bigint(UInt(3))
+        let x = Bigint(-5)
+        let y = Bigint(-3)
+        let e = Bigint(UInt(8))
+        
+        let c = try a + b
+        
+        XCTAssertTrue(try a < e, "5 should be less than 8")
+        XCTAssertTrue(try b < a, "3 should be less than 5")
+        XCTAssertFalse(try e < c, "8 should NOT be less than 8")
+        XCTAssertTrue(try x < b, "-5 should be less than 3")
+        XCTAssertTrue(try y < Bigint(0), "-3 should be less than 0")
+        XCTAssertTrue(try x < y, "-5 should be less than -3")
+
+    }
+    
     func testSimpleAdd() throws {
         let a = Bigint(UInt(5))
         let b = Bigint(UInt(3))
@@ -57,6 +75,7 @@ class BigintTests: XCTestCase {
     static var allTests = [
         ("test construction and == for int", testAssignmentEqualityInt),
         ("test construction and == for uint", testAssignmentEqualityUInt),
+        ("test less than operator", testLessThan),
         ("test add without carry", testSimpleAdd),
         ("test add with one carry", testAddWithSingleCarry),
         ("test add with multiple carry", testAddWithMultipleCarry),    ]
