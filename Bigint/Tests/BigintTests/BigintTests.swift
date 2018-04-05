@@ -72,11 +72,24 @@ class BigintTests: XCTestCase {
         XCTAssertTrue(c == e, "maxint + 3 should be [2, 1, 0, 0]")
     }
     
+    func testSimpleSubtract() throws {
+        let a = Bigint(UInt(5))
+        let b = Bigint(UInt(3))
+        let e = Bigint(UInt(2))
+        
+        let c = try a - b
+        
+        XCTAssertTrue(c == e, "5-3 should be 2")
+    }
+    
     static var allTests = [
         ("test construction and == for int", testAssignmentEqualityInt),
         ("test construction and == for uint", testAssignmentEqualityUInt),
         ("test less than operator", testLessThan),
         ("test add without carry", testSimpleAdd),
         ("test add with one carry", testAddWithSingleCarry),
-        ("test add with multiple carry", testAddWithMultipleCarry),    ]
+        ("test add with multiple carry", testAddWithMultipleCarry),
+        ("test subtract without carry", testSimpleSubtract),
+        
+    ]
 }

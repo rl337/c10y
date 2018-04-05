@@ -1,6 +1,7 @@
 
 enum BigintError : Error {
     case Overflow(String)
+    case Underflow(String)
 }
 
 func == (left: Bigint, right: Bigint) -> Bool {
@@ -25,6 +26,10 @@ func == (left: UInt, right: Bigint) -> Bool {
 
 func + (left: Bigint, right: Bigint) throws -> Bigint {
     return try left.add(right)
+}
+
+func - (left: Bigint, right: Bigint) throws -> Bigint {
+    return try left.subtract(right)
 }
 
 func < (left: Bigint, right: Bigint) throws -> Bool {
@@ -116,6 +121,15 @@ struct Bigint {
         var result = Bigint(self)
         for i:Int in 0..<self.content.count {
             try CarryHelper.add_with_carry(other.content[i], &result.content[i...])
+        }
+        
+        return result
+    }
+    
+    func subtract(_ other: Bigint) throws -> Bigint {
+        var result = Bigint(self)
+        for i:Int in 0..<self.content.count {
+            try CarryHelper.subtract_with_borrow(other.content[i], &result.content[i...])
         }
         
         return result
