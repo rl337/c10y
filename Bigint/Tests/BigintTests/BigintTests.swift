@@ -29,7 +29,7 @@ class BigintTests: XCTestCase {
         
         let c = try a + b
         
-        XCTAssertFalse(c == e, "5+3 should be 8")
+        XCTAssertTrue(c == e, "5+3 should be 8")
     }
     
     func testAddWithSingleCarry() throws {
