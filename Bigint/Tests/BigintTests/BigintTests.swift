@@ -2,48 +2,42 @@ import XCTest
 @testable import Bigint
 
 class BigintTests: XCTestCase {
-    func testAssignmentEqualityInt() {
-        let a = Bigint(Int(5))
-        let b = Bigint(Int(-3))
-
-        XCTAssertFalse(a == b, "5 should not be equal to -3")
-        XCTAssertTrue(a == a, "a value should be equal to itself")
-        XCTAssertTrue(a == 5, "a value should be equal to 5")
-        XCTAssertTrue(5 == a, "a value should be equal to 5 (rhs)")
-    }
-
-    func testAssignmentEqualityUInt() {
-        let a = Bigint(UInt(5))
-        let b = Bigint(UInt(3))
+    func testAssignmentEqualityInt() throws {
+        let a = try UnsignedBigint(Int(5))
+        let b = try UnsignedBigint(Int(3))
 
         XCTAssertFalse(a == b, "5 should not be equal to 3")
         XCTAssertTrue(a == a, "a value should be equal to itself")
-        XCTAssertTrue(a == 5, "a value should be equal to 5")
-        XCTAssertTrue(5 == a, "a value should be equal to 5 (rhs)")
+        XCTAssertTrue(try a == 5, "a value should be equal to 5")
+        XCTAssertTrue(try 5 == a, "a value should be equal to 5 (rhs)")
+    }
+
+    func testAssignmentEqualityUInt() {
+        let a = UnsignedBigint(UInt(5))
+        let b = UnsignedBigint(UInt(3))
+
+        XCTAssertFalse(a == b, "5 should not be equal to 3")
+        XCTAssertTrue(a == a, "a value should be equal to itself")
+        XCTAssertTrue(try a == 5, "a value should be equal to 5")
+        XCTAssertTrue(try 5 == a, "a value should be equal to 5 (rhs)")
     }
     
     func testLessThan() throws {
-        let a = Bigint(UInt(5))
-        let b = Bigint(UInt(3))
-        let x = Bigint(-5)
-        let y = Bigint(-3)
-        let e = Bigint(UInt(8))
+        let a = UnsignedBigint(UInt(5))
+        let b = UnsignedBigint(UInt(3))
+        let e = UnsignedBigint(UInt(8))
         
         let c = try a + b
         
-        XCTAssertTrue(try a < e, "5 should be less than 8")
-        XCTAssertTrue(try b < a, "3 should be less than 5")
-        XCTAssertFalse(try e < c, "8 should NOT be less than 8")
-        XCTAssertTrue(try x < b, "-5 should be less than 3")
-        XCTAssertTrue(try y < Bigint(0), "-3 should be less than 0")
-        XCTAssertTrue(try x < y, "-5 should be less than -3")
-
+        XCTAssertTrue(a < e, "5 should be less than 8")
+        XCTAssertTrue(b < a, "3 should be less than 5")
+        XCTAssertFalse(e < c, "8 should NOT be less than 8")
     }
     
     func testSimpleAdd() throws {
-        let a = Bigint(UInt(5))
-        let b = Bigint(UInt(3))
-        let e = Bigint(UInt(8))
+        let a = UnsignedBigint(UInt(5))
+        let b = UnsignedBigint(UInt(3))
+        let e = UnsignedBigint(UInt(8))
         
         let c = try a + b
         
@@ -51,10 +45,10 @@ class BigintTests: XCTestCase {
     }
     
     func testAddWithSingleCarry() throws {
-        let a = Bigint(UInt.max)
-        let b = Bigint(UInt(3))
+        let a = UnsignedBigint(UInt.max)
+        let b = UnsignedBigint(UInt(3))
         
-        let e = Bigint([UInt64]([2, 1, 0, 0]), negative: false)
+        let e = UnsignedBigint([UInt64]([2, 1, 0, 0]), negative: false)
         
         let c = try a + b
 
@@ -62,10 +56,10 @@ class BigintTests: XCTestCase {
     }
     
     func testAddWithMultipleCarry() throws {
-        let a = Bigint([UInt64]([UInt64.max, UInt64.max, UInt64.max, 0]), negative: false)
-        let b = Bigint(UInt(3))
+        let a = UnsignedBigint([UInt64]([UInt64.max, UInt64.max, UInt64.max, 0]), negative: false)
+        let b = UnsignedBigint(UInt(3))
         
-        let e = Bigint([UInt64]([2, 0, 0, 1]), negative: false)
+        let e = UnsignedBigint([UInt64]([2, 0, 0, 1]), negative: false)
         
         let c = try a + b
 
@@ -73,13 +67,37 @@ class BigintTests: XCTestCase {
     }
     
     func testSimpleSubtract() throws {
-        let a = Bigint(UInt(5))
-        let b = Bigint(UInt(3))
-        let e = Bigint(UInt(2))
+        let a = UnsignedBigint(UInt(5))
+        let b = UnsignedBigint(UInt(3))
+        let e = UnsignedBigint(UInt(2))
         
         let c = try a - b
         
         XCTAssertTrue(c == e, "5-3 should be 2")
+    }
+    
+    func testSubtractWithMultipleBorrow() throws {
+        let a = UnsignedBigint([UInt64]([0, 0, 1, 0]), negative: false)
+        let b = UnsignedBigint(UInt(1))
+        
+        let e = UnsignedBigint([UInt64]([UInt64.max, UInt64.max, 0, 0]), negative: false)
+        
+        let c = try a - b
+        
+        XCTAssertTrue(c == e, "cascading borrow should result in [UInt64.max, UInt64.max, 0, 0]")
+    }
+    
+    
+    func testMultiply() throws {
+        XCTAssertEqual(try UnsignedBigint(0) * UnsignedBigint(50), try UnsignedBigint(0))
+        XCTAssertEqual(try UnsignedBigint(1) * UnsignedBigint(1), try UnsignedBigint(1))
+        XCTAssertEqual(try UnsignedBigint(10) * UnsignedBigint(10), try UnsignedBigint(100))
+    }
+    
+    func testDivide() throws {
+        XCTAssertEqual(try UnsignedBigint(1) / UnsignedBigint(50), try UnsignedBigint(0))
+        XCTAssertEqual(try UnsignedBigint(1) / UnsignedBigint(1), try UnsignedBigint(1))
+        XCTAssertEqual(try UnsignedBigint(100) / UnsignedBigint(10), try UnsignedBigint(10))
     }
     
     static var allTests = [
@@ -89,7 +107,10 @@ class BigintTests: XCTestCase {
         ("test add without carry", testSimpleAdd),
         ("test add with one carry", testAddWithSingleCarry),
         ("test add with multiple carry", testAddWithMultipleCarry),
-        ("test subtract without carry", testSimpleSubtract),
-        
+        ("test subtract without borrow", testSimpleSubtract),
+        ("test subtract with cascading borrow", testSubtractWithMultipleBorrow),
+        ("test multiply", testMultiply),
+        ("test divide", testDivide),
+
     ]
 }
