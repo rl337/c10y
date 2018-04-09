@@ -45,10 +45,10 @@ class BigintTests: XCTestCase {
     }
     
     func testAddWithSingleCarry() throws {
-        let a = UnsignedBigint(UInt.max)
+        let a = UnsignedBigint(UInt32.max)
         let b = UnsignedBigint(UInt(3))
         
-        let e = UnsignedBigint([UInt64]([2, 1, 0, 0]), negative: false)
+        let e = UnsignedBigint([UInt32]([2, 1, 0, 0]))
         
         let c = try a + b
 
@@ -56,10 +56,10 @@ class BigintTests: XCTestCase {
     }
     
     func testAddWithMultipleCarry() throws {
-        let a = UnsignedBigint([UInt64]([UInt64.max, UInt64.max, UInt64.max, 0]), negative: false)
+        let a = UnsignedBigint([UInt32]([UInt32.max, UInt32.max, UInt32.max, 0]))
         let b = UnsignedBigint(UInt(3))
         
-        let e = UnsignedBigint([UInt64]([2, 0, 0, 1]), negative: false)
+        let e = UnsignedBigint([UInt32]([2, 0, 0, 1]))
         
         let c = try a + b
 
@@ -77,10 +77,10 @@ class BigintTests: XCTestCase {
     }
     
     func testSubtractWithMultipleBorrow() throws {
-        let a = UnsignedBigint([UInt64]([0, 0, 1, 0]), negative: false)
+        let a = UnsignedBigint(([UInt32(0), UInt32(0), UInt32(1), UInt32(0)]))
         let b = UnsignedBigint(UInt(1))
         
-        let e = UnsignedBigint([UInt64]([UInt64.max, UInt64.max, 0, 0]), negative: false)
+        let e = UnsignedBigint([UInt32.max, UInt32.max, UInt32(0), UInt32(0)])
         
         let c = try a - b
         
@@ -92,12 +92,39 @@ class BigintTests: XCTestCase {
         XCTAssertEqual(try UnsignedBigint(0) * UnsignedBigint(50), try UnsignedBigint(0))
         XCTAssertEqual(try UnsignedBigint(1) * UnsignedBigint(1), try UnsignedBigint(1))
         XCTAssertEqual(try UnsignedBigint(10) * UnsignedBigint(10), try UnsignedBigint(100))
+        //XCTAssertEqual(try UnsignedBigint(UInt32.max) * UnsignedBigint(10), try UnsignedBigint(0))
+    }
+    
+    func testUnsignedBigintStringize() throws {
+        var index = try UnsignedBigint(1)
+        var expected = "1"
+        for i in 0...3 {
+            let actual = "\(index)"
+            
+            XCTAssertEqual(expected, actual, "Iteration \(i) should have been \(expected) but was \(actual)")
+            try index = index * 10
+            expected.append("0")
+        }
     }
     
     func testDivide() throws {
         XCTAssertEqual(try UnsignedBigint(1) / UnsignedBigint(50), try UnsignedBigint(0))
         XCTAssertEqual(try UnsignedBigint(1) / UnsignedBigint(1), try UnsignedBigint(1))
         XCTAssertEqual(try UnsignedBigint(100) / UnsignedBigint(10), try UnsignedBigint(10))
+        
+        do {
+            _ = try UnsignedBigint(100) / UnsignedBigint(0)
+            XCTFail("Division by zero should have thrown exception")
+        } catch BigintError.DivideByZero {
+        
+        }
+    
+   }
+    
+    func testDescription() throws {
+        XCTAssertEqual(try UnsignedBigint(1).description, "1")
+        XCTAssertEqual(try UnsignedBigint(100).description, "100")
+        //XCTAssertEqual( UnsignedBigint([UInt32]([0, 0, 0, 1])).description, "100")
     }
     
     static var allTests = [
@@ -111,6 +138,7 @@ class BigintTests: XCTestCase {
         ("test subtract with cascading borrow", testSubtractWithMultipleBorrow),
         ("test multiply", testMultiply),
         ("test divide", testDivide),
+        ("test description", testDescription),
 
     ]
 }

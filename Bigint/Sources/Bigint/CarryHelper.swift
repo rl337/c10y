@@ -12,28 +12,34 @@ struct CarryHelper {
     private init() {
         
     }
+    
+    static func splitUInt64(_ value: UInt64) -> (UInt32, UInt32) {
+        let part1 = UInt32(value & 0x00000000FFFFFFFF)
+        let part2 = UInt32(value >> 32)
+        return (part1, part2)
+    }
 
-    static func add(_ a: UInt64, _ b: UInt64) -> (UInt64, UInt64) {
-        if UInt64.max - b >= a {
+    static func add(_ a: UInt32, _ b: UInt32) -> (UInt32, UInt32) {
+        if UInt32.max - b >= a {
              return (a + b, 0)
         }
         
         if (a > b) {
-            return (a - (UInt64.max - b) - 1, 1)
+            return (a - (UInt32.max - b) - 1, 1)
         }
         
-        return (b - (UInt64.max - a) - 1, 1)
+        return (b - (UInt32.max - a) - 1, 1)
     }
     
-    static func subtract(_ a: UInt64, _ b: UInt64) -> (UInt64, UInt64) {
+    static func subtract(_ a: UInt32, _ b: UInt32) -> (UInt32, UInt32) {
         if b > a {
-            return (UInt64.max - b + 1 + a, 1)
+            return (UInt32.max - b + 1 + a, 1)
         }
         
         return (a - b, 0)
     }
     
-    static func add_with_carry(_ value: UInt64, _ arr: inout [UInt64]) throws {
+    static func add_with_carry(_ value: UInt32, _ arr: inout [UInt32]) throws {
         var (v, c) = add(value, arr[0])
         arr[0] = v
         var i = 1
@@ -48,7 +54,7 @@ struct CarryHelper {
         }
     }
     
-    static func add_with_carry(_ v: UInt64, _ slice: inout ArraySlice<UInt64>) throws {
+    static func add_with_carry(_ v: UInt32, _ slice: inout ArraySlice<UInt32>) throws {
         var (v, c) = add(v, slice[slice.startIndex])
         slice[slice.startIndex] = v
         var i = slice.startIndex + 1
@@ -63,7 +69,7 @@ struct CarryHelper {
         }
     }
     
-    static func subtract_with_borrow(_ value: UInt64, _ arr: inout [UInt64]) throws {
+    static func subtract_with_borrow(_ value: UInt32, _ arr: inout [UInt32]) throws {
         var (v, b) = subtract(arr[0], value)
         arr[0] = v
         var i = 1
@@ -78,7 +84,7 @@ struct CarryHelper {
         }
     }
     
-    static func subtract_with_borrow(_ value: UInt64, _ slice: inout ArraySlice<UInt64>) throws {
+    static func subtract_with_borrow(_ value: UInt32, _ slice: inout ArraySlice<UInt32>) throws {
         var (v, b) = subtract(slice[slice.startIndex], value)
         slice[slice.startIndex] = v
         var i = 1
