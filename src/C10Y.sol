@@ -14,6 +14,10 @@ contract C10Y {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
+    // --- Ownership ---
+    address public owner;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
     // --- ERC20 events ---
     event Transfer(address indexed from, address indexed to, uint256 amount);
     event Approval(address indexed owner, address indexed spender, uint256 amount);
@@ -26,7 +30,13 @@ contract C10Y {
         require(initialRecipient != address(0), "recipient=0");
         name = tokenName;
         symbol = tokenSymbol;
+        owner = msg.sender;
         _mint(initialRecipient, initialSupply);
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "not owner");
+        _;
     }
 
     // --- ERC20 core ---
@@ -48,6 +58,30 @@ contract C10Y {
         }
         _transfer(from, to, amount);
         return true;
+    }
+
+    // --- Mint/Burn & Ownership ---
+    function mint(address to, uint256 amount) external onlyOwner {
+        _mint(to, amount);
+    }
+
+    function burn(uint256 amount) external {
+        _burn(msg.sender, amount);
+    }
+
+    function burnFrom(address from, uint256 amount) external {
+        uint256 allowed = allowance[from][msg.sender];
+        if (allowed != type(uint256).max) {
+            require(allowed >= amount, "allowance");
+            unchecked { allowance[from][msg.sender] = allowed - amount; }
+        }
+        _burn(from, amount);
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "owner=0");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
     }
 
     // --- internal helpers ---
@@ -73,5 +107,15 @@ contract C10Y {
         totalSupply += amount;
         balanceOf[to] += amount;
         emit Transfer(address(0), to, amount);
+    }
+
+    function _burn(address from, uint256 amount) internal {
+        uint256 fromBalance = balanceOf[from];
+        require(fromBalance >= amount, "balance");
+        unchecked {
+            balanceOf[from] = fromBalance - amount;
+            totalSupply -= amount;
+        }
+        emit Transfer(from, address(0), amount);
     }
 }

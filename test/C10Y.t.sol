@@ -56,4 +56,41 @@ contract C10YTest is Test {
         vm.expectRevert("allowance");
         token.transferFrom(address(this), bob, 2 ether);
     }
+
+    // --- Mint/Burn/Ownership ---
+    function testOwnerCanMint() public {
+        // owner is address(this)
+        token.mint(alice, 123 ether);
+        assertEq(token.balanceOf(alice), 123 ether);
+        assertEq(token.totalSupply(), 1_000_000 ether + 123 ether);
+    }
+
+    function testNonOwnerCannotMint() public {
+        vm.prank(alice);
+        vm.expectRevert("not owner");
+        token.mint(alice, 1 ether);
+    }
+
+    function testBurnSelf() public {
+        token.burn(10 ether);
+        assertEq(token.balanceOf(address(this)), 1_000_000 ether - 10 ether);
+        assertEq(token.totalSupply(), 1_000_000 ether - 10 ether);
+    }
+
+    function testBurnFromWithAllowance() public {
+        token.approve(alice, 50 ether);
+        vm.prank(alice);
+        token.burnFrom(address(this), 20 ether);
+        assertEq(token.balanceOf(address(this)), 1_000_000 ether - 20 ether);
+        assertEq(token.totalSupply(), 1_000_000 ether - 20 ether);
+        assertEq(token.allowance(address(this), alice), 30 ether);
+    }
+
+    function testTransferOwnership() public {
+        token.transferOwnership(alice);
+        // alice can mint now
+        vm.prank(alice);
+        token.mint(bob, 7 ether);
+        assertEq(token.balanceOf(bob), 7 ether);
+    }
 }

@@ -3,6 +3,11 @@
 /cache/
 /broadcast/
 /.foundry/cache/
+/lib/
+
+# Coverage
+lcov.info
+/coverage/
 
 # Env
 .env
@@ -10,6 +15,10 @@
 
 # Node (if used)
 node_modules/
+
+# Editors
+.vscode/
+.idea/
 
 # OS
 .DS_Store

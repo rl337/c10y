@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>C10Y — Cryptovalley</title>
+    <meta name="description" content="C10Y token dApp" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>⚡</text></svg>">
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <style>
+      :root { --bg: #0b0e13; --card: #121721; --fg: #e6edf3; --muted: #93a1b5; --accent: #8ae5ff; --good: #34d399; --bad: #f87171; }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body { margin: 0; background: radial-gradient(1200px 800px at 70% -20%, rgba(138,229,255,0.15), transparent 60%), var(--bg); color: var(--fg); font: 16px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+      header { display: flex; justify-content: space-between; align-items: center; padding: 20px; }
+      .title { font-weight: 700; letter-spacing: 0.2px; }
+      .card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.0)); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+      .container { max-width: 960px; margin: 0 auto; padding: 20px; display: grid; gap: 20px; }
+      button { background: var(--accent); color: #0b0e13; border: none; border-radius: 10px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      input[type="text"], input[type="number"] { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: #0f131b; color: var(--fg); }
+      label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .muted { color: var(--muted); }
+      .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: rgba(138,229,255,0.1); border: 1px solid rgba(138,229,255,0.25); color: var(--accent); font-weight: 600; font-size: 12px; }
+      footer { text-align: center; padding: 30px; color: var(--muted); }
+      a { color: var(--accent); text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="title">C10Y — Cryptovalley <span class="pill" id="network">disconnected</span></div>
+      <button id="connect">Connect Wallet</button>
+    </header>
+
+    <div class="container">
+      <section class="card">
+        <div class="row">
+          <div>
+            <div class="muted">Your address</div>
+            <div id="address">—</div>
+          </div>
+          <div>
+            <div class="muted">Your C10Y balance</div>
+            <div id="balance">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3 style="margin-top:0">Transfer</h3>
+        <div class="row">
+          <div>
+            <label>Recipient</label>
+            <input type="text" id="to" placeholder="0x..." />
+          </div>
+          <div>
+            <label>Amount (C10Y)</label>
+            <input type="number" id="amount" min="0" step="0.000000000000000001" placeholder="0" />
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <button id="send">Send</button>
+        </div>
+        <div class="muted" id="txStatus" style="margin-top:10px">—</div>
+      </section>
+
+      <section class="card">
+        <h3 style="margin-top:0">Mint (owner only)</h3>
+        <div class="row">
+          <div>
+            <label>Recipient</label>
+            <input type="text" id="mintTo" placeholder="0x..." />
+          </div>
+          <div>
+            <label>Amount (C10Y)</label>
+            <input type="number" id="mintAmount" min="0" step="0.000000000000000001" placeholder="0" />
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <button id="mint">Mint</button>
+        </div>
+        <div class="muted" id="mintStatus" style="margin-top:10px">—</div>
+      </section>
+
+      <section class="card">
+        <h3 style="margin-top:0">Deployment</h3>
+        <div class="muted">Contract: <span id="contract">—</span></div>
+      </section>
+    </div>
+
+    <footer>
+      Built with <a href="https://viem.sh">viem</a> • Connect with Rainbow/WalletConnect-compatible wallets.
+    </footer>
+
+    <script type="module">
+      import { createPublicClient, createWalletClient, custom, http, formatEther, parseEther, getAddress } from 'https://esm.sh/viem@2.22.3';
+      import { sepolia, mainnet } from 'https://esm.sh/viem@2.22.3/chains';
+
+      const $ = (id) => document.getElementById(id);
+      const state = { chain: null, address: null, client: null, wallet: null, contract: null, abi: null };
+
+      async function loadDeployment() {
+        try {
+          const res = await fetch('./deployment.json', { cache: 'no-store' });
+          if (!res.ok) throw new Error('no deployment');
+          const d = await res.json();
+          state.contract = getAddress(d.address);
+          state.abi = d.abi;
+          const chain = d.chainId === 11155111 ? sepolia : (d.chainId === 1 ? mainnet : sepolia);
+          state.chain = chain;
+          $('contract').textContent = `${state.contract} (chainId ${d.chainId})`;
+          $('network').textContent = chain.name;
+          return chain;
+        } catch (e) {
+          $('contract').textContent = 'No deployment.json found';
+          $('network').textContent = 'unknown';
+          return sepolia;
+        }
+      }
+
+      function getInjected() {
+        if (typeof window.ethereum !== 'undefined') return window.ethereum;
+        alert('No wallet detected. Install Rainbow, MetaMask, or a WalletConnect-compatible wallet.');
+        throw new Error('no wallet');
+      }
+
+      async function connect() {
+        const chain = await loadDeployment();
+        const eth = getInjected();
+        const accounts = await eth.request({ method: 'eth_requestAccounts' });
+        const address = getAddress(accounts[0]);
+        const wallet = createWalletClient({ chain, transport: custom(eth) });
+        const client = createPublicClient({ chain, transport: http() });
+        state.address = address; state.wallet = wallet; state.client = client;
+        $('address').textContent = address;
+        await refreshBalance();
+      }
+
+      async function refreshBalance() {
+        if (!state.contract || !state.client || !state.address || !state.abi) return;
+        try {
+          const bal = await state.client.readContract({ address: state.contract, abi: state.abi, functionName: 'balanceOf', args: [state.address] });
+          $('balance').textContent = formatEther(bal);
+        } catch (e) {
+          $('balance').textContent = '—';
+        }
+      }
+
+      async function send() {
+        const to = $('to').value.trim();
+        const amt = $('amount').value.trim();
+        if (!to || !amt) return;
+        $('txStatus').textContent = 'Sending...';
+        try {
+          const hash = await state.wallet.writeContract({ address: state.contract, abi: state.abi, functionName: 'transfer', args: [getAddress(to), parseEther(amt)] });
+          $('txStatus').textContent = `Tx: ${hash}`;
+          await refreshBalance();
+        } catch (e) {
+          $('txStatus').textContent = e.message || 'Error';
+        }
+      }
+
+      async function mint() {
+        const to = $('mintTo').value.trim();
+        const amt = $('mintAmount').value.trim();
+        if (!to || !amt) return;
+        $('mintStatus').textContent = 'Minting...';
+        try {
+          const hash = await state.wallet.writeContract({ address: state.contract, abi: state.abi, functionName: 'mint', args: [getAddress(to), parseEther(amt)] });
+          $('mintStatus').textContent = `Tx: ${hash}`;
+          await refreshBalance();
+        } catch (e) {
+          $('mintStatus').textContent = e.message || 'Error';
+        }
+      }
+
+      $('connect').addEventListener('click', connect);
+      $('send').addEventListener('click', send);
+      $('mint').addEventListener('click', mint);
+      loadDeployment();
+    </script>
+  </body>
+</html>
